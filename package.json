@@ -1,0 +1,49 @@
+{
+  "name": "url-content-saver-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for saving URL content to files",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "start:http": "node dist/http-server.js",
+    "dev:http": "ts-node src/http-server.ts",
+    "test:client": "ts-node src/test-client.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chirag127/URL-Content-Saver-MCP-Server.git"
+  },
+  "keywords": [
+    "mcp",
+    "url",
+    "content",
+    "saver",
+    "file",
+    "download"
+  ],
+  "author": "Chirag Singhal",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/chirag127/URL-Content-Saver-MCP-Server/issues"
+  },
+  "homepage": "https://github.com/chirag127/URL-Content-Saver-MCP-Server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.0",
+    "node-fetch": "^3.3.2",
+    "path": "^0.12.7",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.15.18",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
