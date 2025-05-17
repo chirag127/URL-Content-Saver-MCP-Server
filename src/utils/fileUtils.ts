@@ -97,48 +97,53 @@ export function getBaseDirectory(): string {
         return process.env.MCP_BASE_DIR;
     }
 
-    // For Augment Code, try to use a hardcoded path if we detect we're in the Augment Code app directory
+    // For Augment Code or other environments, try to use a configuration file
     const cwd = process.cwd();
+    console.log(`Checking for configuration in: ${cwd}`);
+
+    // Try to find a configuration file in the current directory
+    try {
+        const configPaths = [
+            path.join(cwd, ".mcp-config.json"),
+            path.join(cwd, "mcp-config.json"),
+            path.join(os.homedir(), ".mcp-config.json"),
+        ];
+
+        for (const configPath of configPaths) {
+            if (fs.existsSync(configPath)) {
+                console.log(`Found configuration file: ${configPath}`);
+                try {
+                    const config = JSON.parse(
+                        fs.readFileSync(configPath, "utf8")
+                    );
+                    if (config.baseDir && fs.existsSync(config.baseDir)) {
+                        console.log(
+                            `Using base directory from config: ${config.baseDir}`
+                        );
+                        return config.baseDir;
+                    }
+                } catch (parseError) {
+                    console.error(`Error parsing config file: ${parseError}`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`Error reading configuration: ${error}`);
+    }
+
+    // If we're in a special environment like Augment Code, log it but don't use hardcoded paths
     if (
         cwd.includes("AppData\\Local\\Programs\\Trae") ||
         cwd.includes("AppData/Local/Programs/Trae")
     ) {
         console.log("Detected Augment Code environment");
-
-        // Try to use D:\AM\GitHub\web-chatter as the base directory
-        const webChatterDir = "D:\\AM\\GitHub\\web-chatter";
-        if (fs.existsSync(webChatterDir)) {
-            console.log(`Using web-chatter directory: ${webChatterDir}`);
-            return webChatterDir;
-        }
-
-        // Try to find any GitHub directory on D: drive
-        try {
-            const dDrive = "D:\\";
-            if (fs.existsSync(dDrive)) {
-                // Check if AM\GitHub exists
-                const amGithubDir = path.join(dDrive, "AM", "GitHub");
-                if (fs.existsSync(amGithubDir)) {
-                    console.log(`Using AM\\GitHub directory: ${amGithubDir}`);
-                    return amGithubDir;
-                }
-
-                // Look for any GitHub directory
-                const amDir = path.join(dDrive, "AM");
-                if (fs.existsSync(amDir)) {
-                    const dirs = fs.readdirSync(amDir);
-                    for (const dir of dirs) {
-                        const fullPath = path.join(amDir, dir);
-                        if (fs.statSync(fullPath).isDirectory()) {
-                            console.log(`Using directory: ${fullPath}`);
-                            return fullPath;
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error(`Error searching for GitHub directory: ${error}`);
-        }
+        console.log("No configuration found. Using current working directory.");
+        console.log(
+            "To specify a custom base directory, set the MCP_BASE_DIR environment variable"
+        );
+        console.log(
+            "or create a .mcp-config.json file in the current directory or home directory."
+        );
     }
 
     // Try to use the current working directory

@@ -129,13 +129,31 @@ When using this MCP server in Augment Code, the following special handling is ap
 
 1. **Automatic Directory Detection**: The server automatically detects when it's running in the Augment Code environment (by checking if the current working directory contains `AppData\Local\Programs\Trae`).
 
-2. **Hardcoded Path Support**: When running in Augment Code, the server will try to use `D:\AM\GitHub\web-chatter` as the base directory for file operations. If this directory doesn't exist, it will try to find any directory under `D:\AM\GitHub\`.
+2. **Configuration File Support**: The server looks for a configuration file (`.mcp-config.json` or `mcp-config.json`) in the current directory or home directory to determine the base directory for file operations.
 
-3. **Relative Path Resolution**: When you provide a relative path like `test-output/example.html`, it will be resolved relative to `D:\AM\GitHub\web-chatter` instead of the Augment Code application directory.
+3. **Environment Variable Support**: You can set the `MCP_BASE_DIR` environment variable to specify the base directory for file operations.
 
 4. **Path Safety**: The server allows any path when running in the Augment Code environment, so you can save files to any location on your system.
 
 5. **Debugging**: The server logs detailed information about path resolution and file operations to help diagnose issues.
+
+### Configuration File
+
+You can create a configuration file to specify the base directory for file operations. The server looks for the following files in order:
+
+1. `.mcp-config.json` in the current directory
+2. `mcp-config.json` in the current directory
+3. `.mcp-config.json` in the home directory
+
+Example configuration file:
+
+```json
+{
+    "baseDir": "D:/AM/GitHub/web-chatter"
+}
+```
+
+This will set the base directory to `D:/AM/GitHub/web-chatter` for all file operations.
 
 ## Project Structure
 
