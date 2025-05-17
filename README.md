@@ -1,5 +1,7 @@
 # URL Content Saver MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@chirag127/url-content-saver-mcp-server)](https://smithery.ai/server/@chirag127/url-content-saver-mcp-server)
+
 A Model Context Protocol (MCP) server that allows AI agents to download and save web content directly to files in the codebase.
 
 ## Overview
@@ -18,6 +20,16 @@ This MCP server solves the problem where AI agents are unable to fetch and write
 -   npm or yarn
 
 ## Installation
+
+### Installing via Smithery
+
+To install URL Content Saver for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@chirag127/url-content-saver-mcp-server):
+
+```bash
+npx -y @smithery/cli install @chirag127/url-content-saver-mcp-server --client claude
+```
+
+### Manual Installation
 
 ```bash
 # Clone the repository
