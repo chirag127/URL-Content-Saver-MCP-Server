@@ -100,6 +100,21 @@ In case of an error:
 
 If you encounter an error like `Invalid schema for tool saveUrlContent: unknown format "uri" ignored in schema at path "#/properties/url"`, it means there's an issue with the URL format validation. This has been fixed in the current version by using a simpler string validation approach with manual URL validation during execution.
 
+### Using in VS Code Extensions
+
+When using this MCP server in a VS Code extension (like Augment Code), you may need to consider the following:
+
+1. **Path Resolution**: The server now automatically detects VS Code extension environments and uses the appropriate base directory for file operations. It checks for environment variables like `VSCODE_CWD` and `VSCODE_EXTENSION_PATH`.
+
+2. **Debugging**: The server includes extensive logging to help diagnose issues. Look for log messages in the VS Code Developer Tools console or extension output channel.
+
+3. **File Paths**: When specifying file paths, you can use either:
+
+    - Absolute paths (which will be validated for safety)
+    - Relative paths (which will be resolved relative to the detected base directory)
+
+4. **Environment Variables**: If you're having issues with path resolution, you can set the `VSCODE_CWD` environment variable to explicitly specify the base directory for file operations.
+
 ## Project Structure
 
 ```
