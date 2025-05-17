@@ -4,16 +4,16 @@ A Model Context Protocol (MCP) server that allows AI agents to download content 
 
 ## Features
 
-- Provides a tool for AI agents to download content from any URL and save it to a specified file path
-- Handles large content that would exceed the AI's token limit by processing the download and file writing operations server-side
-- Supports saving files to any valid path specified by the AI agent
-- Implements proper error handling for cases such as invalid URLs, network failures, or permission issues
-- Returns a success confirmation or detailed error message to the AI agent
+-   Provides a tool for AI agents to download content from any URL and save it to a specified file path
+-   Handles large content that would exceed the AI's token limit by processing the download and file writing operations server-side
+-   Supports saving files to any valid path specified by the AI agent
+-   Implements proper error handling for cases such as invalid URLs, network failures, or permission issues
+-   Returns a success confirmation or detailed error message to the AI agent
 
 ## Prerequisites
 
-- Node.js 18.x or higher
-- npm or yarn
+-   Node.js 18.x or higher
+-   npm or yarn
 
 ## Installation
 
@@ -70,23 +70,42 @@ Downloads content from a URL and saves it to a specified file path.
 
 #### Parameters
 
-- `url` (string, required): The complete URL to fetch content from (must include http:// or https://)
-- `filePath` (string, required): The complete target file path where the content should be saved
+-   `url` (string, required): The complete URL to fetch content from (must include http:// or https://)
+-   `filePath` (string, required): The complete target file path where the content should be saved
 
 #### Returns
 
-- Success: `Successfully saved content from [url] to [filePath]`
-- Error: Detailed error message explaining what went wrong
+On success:
+
+```json
+{
+    "success": true,
+    "filePath": "/absolute/path/to/saved/file.html",
+    "fileSize": 12345,
+    "contentType": "text/html",
+    "url": "https://example.com",
+    "statusCode": 200
+}
+```
+
+On error:
+
+```json
+{
+    "success": false,
+    "error": "Detailed error message"
+}
+```
 
 #### Example
 
 ```json
 {
-  "name": "saveUrlContent",
-  "arguments": {
-    "url": "https://example.com/sample.pdf",
-    "filePath": "/path/to/save/sample.pdf"
-  }
+    "name": "saveUrlContent",
+    "arguments": {
+        "url": "https://example.com/sample.pdf",
+        "filePath": "/path/to/save/sample.pdf"
+    }
 }
 ```
 
@@ -101,10 +120,11 @@ npm run start:http
 ```
 
 2. In Claude for Desktop, add the MCP server:
-   - Go to Settings > MCP Servers
-   - Click "Add Server"
-   - Enter the URL: `http://localhost:3000/mcp`
-   - Name it "URL Content Saver"
+
+    - Go to Settings > MCP Servers
+    - Click "Add Server"
+    - Enter the URL: `http://localhost:3000/mcp`
+    - Name it "URL Content Saver"
 
 3. Claude can now use the `saveUrlContent` tool to download and save content.
 
@@ -113,31 +133,31 @@ npm run start:http
 For programmatic integration with the MCP TypeScript SDK:
 
 ```typescript
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 async function main() {
-  const transport = new StreamableHTTPClientTransport(
-    new URL('http://localhost:3000/mcp')
-  );
+    const transport = new StreamableHTTPClientTransport(
+        new URL("http://localhost:3000/mcp")
+    );
 
-  const client = new Client({
-    name: 'example-client',
-    version: '1.0.0'
-  });
+    const client = new Client({
+        name: "example-client",
+        version: "1.0.0",
+    });
 
-  await client.connect(transport);
+    await client.connect(transport);
 
-  // Call the saveUrlContent tool
-  const result = await client.callTool({
-    name: 'saveUrlContent',
-    arguments: {
-      url: 'https://example.com/sample.pdf',
-      filePath: '/path/to/save/sample.pdf'
-    }
-  });
+    // Call the saveUrlContent tool
+    const result = await client.callTool({
+        name: "saveUrlContent",
+        arguments: {
+            url: "https://example.com/sample.pdf",
+            filePath: "/path/to/save/sample.pdf",
+        },
+    });
 
-  console.log(result);
+    console.log(result);
 }
 
 main().catch(console.error);

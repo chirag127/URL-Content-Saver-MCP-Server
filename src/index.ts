@@ -167,7 +167,7 @@ server.tool(
             content: [
                 {
                     type: "text",
-                    text: result.message,
+                    text: JSON.stringify(result, null, 2),
                 },
             ],
             isError: !result.success,
