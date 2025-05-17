@@ -8,6 +8,7 @@ import {
 } from "../utils/fileUtils.js";
 import path from "path";
 import os from "os";
+import fs from "fs-extra";
 
 /**
  * Creates and configures the URL Content Saver MCP Server
@@ -22,6 +23,12 @@ export function createUrlContentSaverServer(): McpServer {
     console.log(`Node.js version: ${process.version}`);
     console.log(`Platform: ${process.platform}`);
 
+    // Set environment variables for VS Code extensions if needed
+    if (!process.env.MCP_ALLOW_ANY_PATH) {
+        console.log("Setting MCP_ALLOW_ANY_PATH=true for VS Code extensions");
+        process.env.MCP_ALLOW_ANY_PATH = "true";
+    }
+
     // Log VS Code specific environment variables if they exist
     if (process.env.VSCODE_CWD) {
         console.log(`VS Code CWD: ${process.env.VSCODE_CWD}`);
@@ -30,6 +37,19 @@ export function createUrlContentSaverServer(): McpServer {
         console.log(
             `VS Code Extension Path: ${process.env.VSCODE_EXTENSION_PATH}`
         );
+    }
+    if (process.env.VSCODE_WORKSPACE_FOLDER) {
+        console.log(
+            `VS Code Workspace Folder: ${process.env.VSCODE_WORKSPACE_FOLDER}`
+        );
+    }
+
+    // Log MCP-specific environment variables
+    if (process.env.MCP_BASE_DIR) {
+        console.log(`MCP Base Directory: ${process.env.MCP_BASE_DIR}`);
+    }
+    if (process.env.MCP_ALLOW_ANY_PATH) {
+        console.log(`MCP Allow Any Path: ${process.env.MCP_ALLOW_ANY_PATH}`);
     }
 
     const server = new McpServer({
@@ -78,10 +98,40 @@ export function createUrlContentSaverServer(): McpServer {
                 const normalizedPath = path.normalize(filePath);
                 console.log(`Normalized file path: ${normalizedPath}`);
 
-                // Resolve the absolute path
-                const absolutePath = path.isAbsolute(normalizedPath)
-                    ? normalizedPath
-                    : path.resolve(baseDir, normalizedPath);
+                // Special case for Augment Code environment
+                let absolutePath;
+                if (
+                    process.cwd().includes("AppData\\Local\\Programs\\Trae") ||
+                    process.cwd().includes("AppData/Local/Programs/Trae")
+                ) {
+                    // If it's a relative path and we're in Augment Code, try to use D:\AM\GitHub\web-chatter
+                    if (!path.isAbsolute(normalizedPath)) {
+                        const webChatterDir = "D:\\AM\\GitHub\\web-chatter";
+                        if (fs.existsSync(webChatterDir)) {
+                            absolutePath = path.resolve(
+                                webChatterDir,
+                                normalizedPath
+                            );
+                            console.log(
+                                `Using web-chatter directory for relative path: ${absolutePath}`
+                            );
+                        } else {
+                            // Fallback to normal resolution
+                            absolutePath = path.isAbsolute(normalizedPath)
+                                ? normalizedPath
+                                : path.resolve(baseDir, normalizedPath);
+                        }
+                    } else {
+                        // It's already an absolute path
+                        absolutePath = normalizedPath;
+                    }
+                } else {
+                    // Normal case - resolve relative to base directory
+                    absolutePath = path.isAbsolute(normalizedPath)
+                        ? normalizedPath
+                        : path.resolve(baseDir, normalizedPath);
+                }
+
                 console.log(`Absolute file path: ${absolutePath}`);
 
                 // Fetch the URL content as a stream

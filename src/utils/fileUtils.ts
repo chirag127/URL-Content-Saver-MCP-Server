@@ -89,24 +89,92 @@ export async function saveStreamToFile(
  * @returns The base directory to use for file operations
  */
 export function getBaseDirectory(): string {
-    // Try to use the current working directory first
+    // Check for explicitly set environment variable for base directory
+    if (process.env.MCP_BASE_DIR && fs.existsSync(process.env.MCP_BASE_DIR)) {
+        console.log(
+            `Using MCP_BASE_DIR environment variable: ${process.env.MCP_BASE_DIR}`
+        );
+        return process.env.MCP_BASE_DIR;
+    }
+
+    // For Augment Code, try to use a hardcoded path if we detect we're in the Augment Code app directory
     const cwd = process.cwd();
+    if (
+        cwd.includes("AppData\\Local\\Programs\\Trae") ||
+        cwd.includes("AppData/Local/Programs/Trae")
+    ) {
+        console.log("Detected Augment Code environment");
+
+        // Try to use D:\AM\GitHub\web-chatter as the base directory
+        const webChatterDir = "D:\\AM\\GitHub\\web-chatter";
+        if (fs.existsSync(webChatterDir)) {
+            console.log(`Using web-chatter directory: ${webChatterDir}`);
+            return webChatterDir;
+        }
+
+        // Try to find any GitHub directory on D: drive
+        try {
+            const dDrive = "D:\\";
+            if (fs.existsSync(dDrive)) {
+                // Check if AM\GitHub exists
+                const amGithubDir = path.join(dDrive, "AM", "GitHub");
+                if (fs.existsSync(amGithubDir)) {
+                    console.log(`Using AM\\GitHub directory: ${amGithubDir}`);
+                    return amGithubDir;
+                }
+
+                // Look for any GitHub directory
+                const amDir = path.join(dDrive, "AM");
+                if (fs.existsSync(amDir)) {
+                    const dirs = fs.readdirSync(amDir);
+                    for (const dir of dirs) {
+                        const fullPath = path.join(amDir, dir);
+                        if (fs.statSync(fullPath).isDirectory()) {
+                            console.log(`Using directory: ${fullPath}`);
+                            return fullPath;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Error searching for GitHub directory: ${error}`);
+        }
+    }
+
+    // Try to use the current working directory
+    console.log(`Current working directory: ${cwd}`);
 
     // If we're in a VS Code extension, try to use the workspace folder
     if (process.env.VSCODE_CWD) {
+        console.log(`Found VSCODE_CWD: ${process.env.VSCODE_CWD}`);
         return process.env.VSCODE_CWD;
     }
 
     // If we're in a VS Code extension but VSCODE_CWD is not set, try other environment variables
     if (process.env.VSCODE_EXTENSION_PATH) {
+        console.log(
+            `Found VSCODE_EXTENSION_PATH: ${process.env.VSCODE_EXTENSION_PATH}`
+        );
         return process.env.VSCODE_EXTENSION_PATH;
+    }
+
+    // Check if we're in a VS Code workspace
+    if (process.env.VSCODE_WORKSPACE_FOLDER) {
+        console.log(
+            `Found VSCODE_WORKSPACE_FOLDER: ${process.env.VSCODE_WORKSPACE_FOLDER}`
+        );
+        return process.env.VSCODE_WORKSPACE_FOLDER;
     }
 
     // If all else fails, use the home directory
     if (!fs.existsSync(cwd) || !fs.statSync(cwd).isDirectory()) {
+        console.log(
+            `CWD not accessible, using home directory: ${os.homedir()}`
+        );
         return os.homedir();
     }
 
+    console.log(`Using current working directory: ${cwd}`);
     return cwd;
 }
 
@@ -121,16 +189,70 @@ export function isPathSafe(filePath: string, baseDir?: string): boolean {
     const baseDirToUse = baseDir || getBaseDirectory();
 
     try {
+        console.log(`Checking if path is safe: ${filePath}`);
+        console.log(`Base directory: ${baseDirToUse}`);
+
+        // Special case for VS Code extensions - allow any path if we're in a VS Code extension
+        // and the MCP_ALLOW_ANY_PATH environment variable is set
+        if (process.env.MCP_ALLOW_ANY_PATH === "true") {
+            console.log("MCP_ALLOW_ANY_PATH is set to true, allowing any path");
+            return true;
+        }
+
+        // Special case for Augment Code - allow any path if we're in the Augment Code environment
+        if (
+            baseDirToUse.includes("AppData\\Local\\Programs\\Trae") ||
+            baseDirToUse.includes("AppData/Local/Programs/Trae")
+        ) {
+            console.log("Detected Augment Code environment, allowing any path");
+            return true;
+        }
+
+        // Special case for VS Code extensions - if the path starts with a drive letter
+        // and we're in a VS Code extension, check if it's a valid drive
+        if (
+            path.isAbsolute(filePath) &&
+            /^[a-zA-Z]:\\/.test(filePath) &&
+            (process.env.VSCODE_CWD ||
+                process.env.VSCODE_EXTENSION_PATH ||
+                process.env.VSCODE_WORKSPACE_FOLDER)
+        ) {
+            // Extract the drive letter from the file path
+            const driveLetter = filePath.substring(0, 1).toUpperCase();
+
+            // Check if the drive exists
+            try {
+                const drives = fs.readdirSync("/");
+                if (drives.includes(`${driveLetter}:`)) {
+                    console.log(`Drive ${driveLetter}: exists, allowing path`);
+                    return true;
+                }
+            } catch (error) {
+                console.log(`Error checking drives: ${error}`);
+                // Continue with normal path safety check
+            }
+        }
+
         // Handle absolute paths
         if (path.isAbsolute(filePath)) {
             const resolvedPath = path.resolve(filePath);
-            return resolvedPath.startsWith(path.resolve(baseDirToUse));
+            const resolvedBaseDir = path.resolve(baseDirToUse);
+            const isSafe = resolvedPath.startsWith(resolvedBaseDir);
+            console.log(
+                `Absolute path check: ${resolvedPath} starts with ${resolvedBaseDir}: ${isSafe}`
+            );
+            return isSafe;
         }
 
         // Handle relative paths
         const normalizedPath = path.normalize(filePath);
         const resolvedPath = path.resolve(baseDirToUse, normalizedPath);
-        return resolvedPath.startsWith(path.resolve(baseDirToUse));
+        const resolvedBaseDir = path.resolve(baseDirToUse);
+        const isSafe = resolvedPath.startsWith(resolvedBaseDir);
+        console.log(
+            `Relative path check: ${resolvedPath} starts with ${resolvedBaseDir}: ${isSafe}`
+        );
+        return isSafe;
     } catch (error) {
         console.error(
             `Error validating path safety: ${

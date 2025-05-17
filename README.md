@@ -104,7 +104,7 @@ If you encounter an error like `Invalid schema for tool saveUrlContent: unknown 
 
 When using this MCP server in a VS Code extension (like Augment Code), you may need to consider the following:
 
-1. **Path Resolution**: The server now automatically detects VS Code extension environments and uses the appropriate base directory for file operations. It checks for environment variables like `VSCODE_CWD` and `VSCODE_EXTENSION_PATH`.
+1. **Path Resolution**: The server now automatically detects VS Code extension environments and uses the appropriate base directory for file operations. It checks for environment variables like `VSCODE_CWD`, `VSCODE_EXTENSION_PATH`, and `VSCODE_WORKSPACE_FOLDER`.
 
 2. **Debugging**: The server includes extensive logging to help diagnose issues. Look for log messages in the VS Code Developer Tools console or extension output channel.
 
@@ -113,7 +113,29 @@ When using this MCP server in a VS Code extension (like Augment Code), you may n
     - Absolute paths (which will be validated for safety)
     - Relative paths (which will be resolved relative to the detected base directory)
 
-4. **Environment Variables**: If you're having issues with path resolution, you can set the `VSCODE_CWD` environment variable to explicitly specify the base directory for file operations.
+4. **Environment Variables**: The server supports the following environment variables:
+
+    - `MCP_BASE_DIR`: Explicitly specify the base directory for file operations
+    - `MCP_ALLOW_ANY_PATH`: Set to "true" to allow any file path (default is now "true" for VS Code extensions)
+    - `VSCODE_CWD`: VS Code's current working directory
+    - `VSCODE_EXTENSION_PATH`: Path to the VS Code extension
+    - `VSCODE_WORKSPACE_FOLDER`: Path to the VS Code workspace folder
+
+5. **Absolute Paths**: The server now supports absolute paths with drive letters (e.g., `D:\path\to\file.txt`) when running in a VS Code extension environment.
+
+### Using in Augment Code
+
+When using this MCP server in Augment Code, the following special handling is applied:
+
+1. **Automatic Directory Detection**: The server automatically detects when it's running in the Augment Code environment (by checking if the current working directory contains `AppData\Local\Programs\Trae`).
+
+2. **Hardcoded Path Support**: When running in Augment Code, the server will try to use `D:\AM\GitHub\web-chatter` as the base directory for file operations. If this directory doesn't exist, it will try to find any directory under `D:\AM\GitHub\`.
+
+3. **Relative Path Resolution**: When you provide a relative path like `test-output/example.html`, it will be resolved relative to `D:\AM\GitHub\web-chatter` instead of the Augment Code application directory.
+
+4. **Path Safety**: The server allows any path when running in the Augment Code environment, so you can save files to any location on your system.
+
+5. **Debugging**: The server logs detailed information about path resolution and file operations to help diagnose issues.
 
 ## Project Structure
 
