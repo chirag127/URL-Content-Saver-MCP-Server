@@ -14,8 +14,8 @@ This MCP server solves the problem where AI agents are unable to fetch and write
 
 ## Prerequisites
 
-- Node.js 18.x or higher
-- npm or yarn
+-   Node.js 18.x or higher
+-   npm or yarn
 
 ## Installation
 
@@ -63,19 +63,19 @@ PORT=8080 npm start -- --http
 
 The server exposes a single tool called `saveUrlContent` with the following parameters:
 
-- `url` (string): The URL to fetch content from
-- `filePath` (string): The target file path to save the content to
+-   `url` (string): The URL to fetch content from
+-   `filePath` (string): The target file path to save the content to
 
 #### Example Response
 
 ```json
 {
-  "success": true,
-  "filePath": "path/to/saved/file.html",
-  "fileSize": 12345,
-  "contentType": "text/html",
-  "url": "https://example.com",
-  "statusCode": 200
+    "success": true,
+    "filePath": "path/to/saved/file.html",
+    "fileSize": 12345,
+    "contentType": "text/html",
+    "url": "https://example.com",
+    "statusCode": 200
 }
 ```
 
@@ -83,16 +83,22 @@ In case of an error:
 
 ```json
 {
-  "success": false,
-  "error": "Error message"
+    "success": false,
+    "error": "Error message"
 }
 ```
 
 ## Security Considerations
 
-- The server validates file paths to ensure they are within the project directory
-- URLs are validated before fetching
-- Error handling is implemented for network issues and invalid inputs
+-   The server validates file paths to ensure they are within the project directory
+-   URLs are validated before fetching (using the built-in URL constructor)
+-   Error handling is implemented for network issues and invalid inputs
+
+## Troubleshooting
+
+### "unknown format 'uri' ignored in schema" Error
+
+If you encounter an error like `Invalid schema for tool saveUrlContent: unknown format "uri" ignored in schema at path "#/properties/url"`, it means there's an issue with the URL format validation. This has been fixed in the current version by using a simpler string validation approach with manual URL validation during execution.
 
 ## Project Structure
 

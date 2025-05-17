@@ -1,82 +1,153 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
-import { fetchUrlAsStream } from '../utils/urlUtils.js';
-import { isPathSafe, saveStreamToFile } from '../utils/fileUtils.js';
-import path from 'path';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { fetchUrlAsStream } from "../utils/urlUtils.js";
+import {
+    isPathSafe,
+    saveStreamToFile,
+    getBaseDirectory,
+} from "../utils/fileUtils.js";
+import path from "path";
+import os from "os";
 
 /**
  * Creates and configures the URL Content Saver MCP Server
  * @returns Configured MCP Server instance
  */
 export function createUrlContentSaverServer(): McpServer {
-  const server = new McpServer({
-    name: 'URL Content Saver',
-    version: '1.0.0',
-  });
+    // Log environment information for debugging
+    console.log("Creating URL Content Saver MCP Server");
+    console.log(`Current working directory: ${process.cwd()}`);
+    console.log(`Home directory: ${os.homedir()}`);
+    console.log(`Base directory for file operations: ${getBaseDirectory()}`);
+    console.log(`Node.js version: ${process.version}`);
+    console.log(`Platform: ${process.platform}`);
 
-  // Add the saveUrlContent tool
-  server.tool(
-    'saveUrlContent',
-    {
-      url: z.string().url('Invalid URL format'),
-      filePath: z.string().min(1, 'File path cannot be empty'),
-    },
-    async ({ url, filePath }) => {
-      try {
-        // Validate the file path is safe
-        if (!isPathSafe(filePath)) {
-          return {
-            content: [{ 
-              type: 'text', 
-              text: JSON.stringify({
-                success: false,
-                error: 'Invalid file path: Path is outside the project directory'
-              })
-            }],
-            isError: true
-          };
-        }
-
-        // Normalize the file path
-        const normalizedPath = path.normalize(filePath);
-        
-        // Fetch the URL content as a stream
-        const { stream, metadata } = await fetchUrlAsStream(url);
-        
-        // Save the stream to a file
-        const { filePath: savedPath, fileSize } = await saveStreamToFile(normalizedPath, stream);
-        
-        // Return success response with metadata
-        return {
-          content: [{ 
-            type: 'text', 
-            text: JSON.stringify({
-              success: true,
-              filePath: savedPath,
-              fileSize,
-              contentType: metadata.contentType,
-              url: metadata.url,
-              statusCode: metadata.statusCode
-            })
-          }]
-        };
-      } catch (error) {
-        // Handle errors
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
-        return {
-          content: [{ 
-            type: 'text', 
-            text: JSON.stringify({
-              success: false,
-              error: errorMessage
-            })
-          }],
-          isError: true
-        };
-      }
+    // Log VS Code specific environment variables if they exist
+    if (process.env.VSCODE_CWD) {
+        console.log(`VS Code CWD: ${process.env.VSCODE_CWD}`);
     }
-  );
+    if (process.env.VSCODE_EXTENSION_PATH) {
+        console.log(
+            `VS Code Extension Path: ${process.env.VSCODE_EXTENSION_PATH}`
+        );
+    }
 
-  return server;
+    const server = new McpServer({
+        name: "URL Content Saver",
+        version: "1.0.0",
+    });
+
+    // Add the saveUrlContent tool
+    server.tool(
+        "saveUrlContent",
+        {
+            url: z.string().min(1, "URL cannot be empty"),
+            filePath: z.string().min(1, "File path cannot be empty"),
+        },
+        async ({ url, filePath }) => {
+            console.log(
+                `Tool called: saveUrlContent with URL: ${url}, filePath: ${filePath}`
+            );
+
+            try {
+                // Get the base directory for file operations
+                const baseDir = getBaseDirectory();
+                console.log(`Using base directory: ${baseDir}`);
+
+                // Validate the file path is safe
+                console.log(`Validating file path: ${filePath}`);
+                if (!isPathSafe(filePath, baseDir)) {
+                    console.error(
+                        `Invalid file path: ${filePath} is outside the base directory: ${baseDir}`
+                    );
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: JSON.stringify({
+                                    success: false,
+                                    error: `Invalid file path: Path is outside the base directory (${baseDir})`,
+                                }),
+                            },
+                        ],
+                        isError: true,
+                    };
+                }
+
+                // Normalize the file path
+                const normalizedPath = path.normalize(filePath);
+                console.log(`Normalized file path: ${normalizedPath}`);
+
+                // Resolve the absolute path
+                const absolutePath = path.isAbsolute(normalizedPath)
+                    ? normalizedPath
+                    : path.resolve(baseDir, normalizedPath);
+                console.log(`Absolute file path: ${absolutePath}`);
+
+                // Fetch the URL content as a stream
+                console.log(`Fetching content from URL: ${url}`);
+                const { stream, metadata } = await fetchUrlAsStream(url);
+                console.log(`Successfully fetched content from URL: ${url}`);
+
+                // Save the stream to a file
+                console.log(`Saving content to file: ${absolutePath}`);
+                const { filePath: savedPath, fileSize } =
+                    await saveStreamToFile(absolutePath, stream);
+                console.log(
+                    `Successfully saved content to file: ${savedPath} (${fileSize} bytes)`
+                );
+
+                // Return success response with metadata
+                const response = {
+                    success: true,
+                    filePath: savedPath,
+                    fileSize,
+                    contentType: metadata.contentType,
+                    url: metadata.url,
+                    statusCode: metadata.statusCode,
+                };
+                console.log(
+                    `Returning success response: ${JSON.stringify(response)}`
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(response),
+                        },
+                    ],
+                };
+            } catch (error) {
+                // Handle errors
+                const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error";
+                console.error(`Error in saveUrlContent tool: ${errorMessage}`);
+
+                if (error instanceof Error && error.stack) {
+                    console.error(`Stack trace: ${error.stack}`);
+                }
+
+                const response = {
+                    success: false,
+                    error: errorMessage,
+                };
+                console.log(
+                    `Returning error response: ${JSON.stringify(response)}`
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(response),
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+    return server;
 }
