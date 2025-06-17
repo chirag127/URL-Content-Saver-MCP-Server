@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/chirag127-url-content-saver-mcp-server-badge.png)](https://mseep.ai/app/chirag127-url-content-saver-mcp-server)
+
 # URL Content Saver MCP Server
 [![smithery badge](https://smithery.ai/badge/@chirag127/url-content-saver-mcp-server)](https://smithery.ai/server/@chirag127/url-content-saver-mcp-server)
 
